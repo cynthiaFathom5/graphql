@@ -1,0 +1,18 @@
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
+*.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Mac Thing
+.DS_Store
+
+# Vendoring (Running `go mod download`)
+vendor/
+
+# Build Executable
+bin

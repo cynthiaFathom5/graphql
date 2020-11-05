@@ -2,11 +2,21 @@
 #
 # https://gqlgen.com/getting-started/
 
-type User {
+type User implements Node{
   id: ID!
   name: String!
+  pets: [Pet]!
+}
+
+type Pet {
+  name: String!
+  species: String!
+}
+
+interface Node {
+  id: ID!
 }
 
 type Query {
-  users: [User]
+  node(id: ID!): Node
 }

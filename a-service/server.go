@@ -11,7 +11,7 @@ import (
 	"github.com/FATHOM5/graphql/a-service/graph/generated"
 )
 
-const defaultPort = "8080"
+const defaultPort = "8081"
 
 func main() {
 	port := os.Getenv("PORT")

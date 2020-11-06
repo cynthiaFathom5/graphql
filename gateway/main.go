@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/nautilus/gateway"
 	"github.com/nautilus/graphql"
+	slog "github.com/sirupsen/logrus"
 )
 
 const defaultPort = "8000"
@@ -16,6 +18,8 @@ const defaultPort = "8000"
 // and pass "http://localhost:9000/query" in as the parameter.
 
 func main() {
+	slog.SetLevel(slog.DebugLevel)
+
 	//instropect the apis
 	schemas, err := graphql.IntrospectRemoteSchemas(
 		"http://localhost:8080/query",
@@ -26,8 +30,13 @@ func main() {
 		log.Println("An Error occurred when instropecting the remote schema:", err)
 	}
 
+	// create queryer that can batch requests whenever we query a service
+	factory := gateway.QueryerFactory(func(ctx *gateway.PlanningContext, url string) graphql.Queryer {
+		return graphql.NewMultiOpQueryer(url, 10*time.Millisecond, 1000)
+	})
+
 	//create the gateway instance
-	gw, err := gateway.New(schemas)
+	gw, err := gateway.New(schemas, gateway.WithMiddlewares(addHeader, logResponse), gateway.WithQueryerFactory(&factory))
 	if err != nil {
 		log.Println("Error occured creating gateway instance:", err)
 	}
@@ -40,3 +49,15 @@ func main() {
 		fmt.Println(err.Error())
 	}
 }
+
+var logResponse = gateway.ResponseMiddleware(func(ctx *gateway.ExecutionContext, response map[string]interface{}) error {
+	// you can also modify the response directly if you wanted
+	fmt.Println("done", response)
+
+	return nil
+})
+
+var addHeader = gateway.RequestMiddleware(func(r *http.Request) error {
+	r.Header.Add("X-Array-Batching", "true")
+	return nil
+})
